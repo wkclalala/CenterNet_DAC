@@ -6,6 +6,7 @@ import _init_paths
 
 import os
 import cv2
+import time
 
 from opts import opts
 from detectors.detector_factory import detector_factory
@@ -29,24 +30,31 @@ def demo(opt):
       for line in lines[:-1]:
           image_names.append(os.path.join('../data/data/pictures/pictures/' + line + ".jpg"))
 
-  ious = []
-  for image_name in image_names:
-    print(image_name)
-    ret = detector.run(image_name)
-    time_str = ''
-    for stat in time_stats:
-      time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
-    # print(time_str)
-    # print(ret['iou'])
-    ious.append(ret['iou'])
-    # print(np.mean(np.array(ious)))
+#For testing 5 worst ious
+  ious_dict = {}
 
+#######################
+  ious = []
+  start_time = time.time()
+  counter = 0
+  for image_name in image_names:
+      if counter<500:
+          ret = detector.run(image_name)
+          # print(time_str)
+          # print(ret['iou'])
+          ious.append(ret['iou'])
+          ious_dict[image_name] = ret['iou']
+          counter+=1
+      else:
+          break
+
+  elapsed_time = time.time() - start_time
+  print("Frame per second: ", 500/elapsed_time)
+    # print(np.mean(np.array(ious)))
+  print(sorted(ious_dict.items(), key=lambda kv: (kv[1], kv[0]))[0:10])
   l_np = np.array(ious)
   print("The mean is", np.mean(l_np))
   print("The standard deviation is", np.std(l_np))
-  with open('../data/data/listfile.txt', 'w') as filehandle:
-      for iou in ious:
-          filehandle.write(np.array2string(iou)+"\n")
 
 
 if __name__ == '__main__':

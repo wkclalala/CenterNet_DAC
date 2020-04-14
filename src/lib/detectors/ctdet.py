@@ -23,12 +23,17 @@ from utils.debugger import Debugger
 
 from .base_detector import BaseDetector
 
+from thop import profile
+
 class CtdetDetector(BaseDetector):
   def __init__(self, opt):
     super(CtdetDetector, self).__init__(opt)
   
   def process(self, images, return_time=False):
     with torch.no_grad():
+      # macs, params = profile(self.model, inputs=(images,))
+      # print("macs: ",macs)
+      # print("params: ", params)
       output = self.model(images)[-1]
       hm = output['hm'].sigmoid_()
       wh = output['wh']
@@ -127,7 +132,8 @@ class CtdetDetector(BaseDetector):
     small_area = (point_2[1] - point_1[1]) * (point_2[0] - point_1[0])
     iou = small_area / (
               (ground_truth[2] * ground_truth[3]) + (bbox_s[3] - bbox_s[1]) * (bbox_s[2] - bbox_s[0]) - small_area)
-    print(iou)
+    if iou < 0:
+      iou = 0
     debugger.add_coco_bbox(
       [ground_truth[0], ground_truth[1], ground_truth[0] + ground_truth[2], ground_truth[1] + ground_truth[3]],
       0, 1, False, img_id='ctdet')
